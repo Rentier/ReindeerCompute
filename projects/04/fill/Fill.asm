@@ -67,7 +67,7 @@ M=D					// e = SCREEN
 		
 		@i
 		A=M
-		M=1
+		M=-1
 		
 		@i
 		M=M+1			// i = i + 1
