@@ -1,0 +1,15 @@
+/**
+ * 5-way and gate: out = in[0] and in[1] and ... and in[4].
+ */
+
+CHIP And5Way {
+    IN in[5];
+    OUT out;
+
+    PARTS:
+    And(a=in[0], b=in[1], out=o1);
+    And(a=in[2], b=in[3], out=o2);
+    And(a=o1, b=o2, out=o3);
+	And(a=o3, b=in[4], out=out);
+    
+}

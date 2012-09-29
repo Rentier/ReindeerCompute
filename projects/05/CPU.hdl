@@ -39,5 +39,51 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
      PARTS:
-    // Put your code here.
+	// Decode Instruction
+	And16(a=instruction, b=instruction, out[0]=J3, out[1]=J2, out[2]=J1, out[3]=D3, out[4]=D2, out[5]=D1, out[6]=C6, out[7]=C5, out[8]=C4, out[9]=C3, out[10]=C2, out[11]=C1, out[12]=A, out[13]=X2, out[14]=X1, out[15]=InstructionType );
+	Not(in=InstructionType, out=NotInstructionType);
+	
+	//Mux 1
+	Mux16(a=instruction, b=ALUOutput, sel=InstructionType, out=MuxOneOut );
+	
+	//A Register	
+	Or(a=D1, b=NotInstructionType, out=LoadARegister);
+	ARegister(in=MuxOneOut, load=LoadARegister, out=ARegisterOut, out[0..14]=addressM);
+	
+	//Mux 2
+	Mux16(a=ARegisterOut, b=inM, sel=A, out=MuxTwoOut );
+	
+	//D Register
+	And(a=D2, b=InstructionType, out=LoadDRegister);
+	DRegister(in=ALUOutput, load=LoadDRegister, out=DRegisterOut);
+	
+	//Alu
+	ALU(x=DRegisterOut, y=MuxTwoOut, zx=C1 , nx=C2 , zy=C3, ny=C4, f=C5, no=C6, out=ALUOutput, out=outM, zr=ZR, ng=NG);
+	
+	//WriteM
+	And(a=D3, b=InstructionType, out=writeM);
+	
+	//Jump
+	
+	Not(in=J1, out=NotJ1);
+	Not(in=J2, out=NotJ2);
+	Not(in=J3, out=NotJ3);
+	Not(in=ZR, out=NotZR);
+	Not(in=NG, out=NotNG);
+	
+	And5Way(in[0]=NotJ1, 	in[1]=NotJ2, 	in[2]=J3, 		in[3]=NotZR, 	in[4]=NotNG, 	out=JGT);
+	And5Way(in[0]=NotJ1, 	in[1]=J2, 		in[2]=NotJ3, 	in[3]=ZR, 		in[4]=NotNG, 	out=JEQ);
+	And5Way(in[0]=NotJ1, 	in[1]=J2, 		in[2]=J3, 		in[3]=ZR, 		in[4]=NotNG, 	out=JGE);
+	And5Way(in[0]=J1, 		in[1]=NotJ2, 	in[2]=NotJ3, 	in[3]=NotZR, 	in[4]=NG, 		out=JLT);
+	And5Way(in[0]=J1, 		in[1]=NotJ2, 	in[2]=J3, 		in[3]=NotZR, 	in[4]=true,		out=JNE);
+	And5Way(in[0]=J1, 		in[1]=J2, 		in[2]=NotJ3, 	in[3]=ZR, 		in[4]=NG, 		out=JLE);
+	And5Way(in[0]=J1, 		in[1]=J2, 		in[2]=J3, 		in[3]=true, 	in[4]=true, 	out=JMP);
+	
+	Or8Way(in[0]=JGT, in[1]=JEQ, in[2]=JGE, in[3]=JLT, in[4]=JNE, in[5]=JLE, in[6]=JMP, out=WantJump);
+	And(a=WantJump, b=InstructionType, out=DoJump);
+	
+	//PC
+
+	PC(in=ARegisterOut, load=DoJump, inc=true, reset=reset, out[0..14]=pc, out[15]=false);
+
 }
